@@ -1,0 +1,12 @@
+--- a/sysmodule/src/main.cpp
++++ b/sysmodule/src/main.cpp
+@@ -184,4 +184,9 @@ bool parse_config() {
+     if (auto res = ini_parse_stream(reader, &read_ctx, fz::Config::ini_handler, &config); !res) {
++        // SwitchColor: the profile-switch callback flushes only the PREVIOUS
++        // section. Commit the final section at EOF as well.
++        if (config.cur_profile_id >= FizeauProfileId_Profile1 &&
++                config.cur_profile_id < FizeauProfileId_Total)
++            context.profiles[config.cur_profile_id] = config.profile;
+         context.is_active        = config.active;
+         context.internal_profile = config.internal_profile;
+         context.external_profile = config.external_profile;
