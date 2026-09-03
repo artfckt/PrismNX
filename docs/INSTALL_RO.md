@@ -1,8 +1,11 @@
-# Instalare SwitchColor 0.1.0 pe Switch Lite
+# Instalare SwitchColor 0.2.0 pe Switch Lite
 
 Pachetul este compilat, dar inca netestat pe consola. Tinta indicata este Switch
 Lite / Atmosphere 1.11.2|S / firmware raportat 20.5.0. Nu este necesara o schimbare
 de firmware pentru a copia pachetul; functionarea trebuie verificata local.
+
+Pentru upgrade de la 0.1.0 este suficient fisierul `.ovl` din arhiva
+`overlay-only`. Vezi `TOOLKIT_RO.md` pentru meniu, toate preseturile si unelte.
 
 ## 1. Pregateste meniul overlay
 
@@ -19,7 +22,7 @@ SwitchColor nu o modifica. Daca nu ai un meniu:
 1. Opreste consola si deschide cardul SD pe calculator.
 2. Daca ai Fizeau, pastreaza o copie a folderului
    `atmosphere/contents/0100000000000F12` si a configuratiei existente.
-3. Extrage `SwitchColor-0.1.0-SwitchLite.zip` pe calculator.
+3. Extrage `SwitchColor-0.2.0-SwitchLite.zip` pe calculator.
 4. Copiaza **continutul folderului `sd`** in radacina cardului SD, combinand
    directoarele. Nu copia folderul `sd` ca atare.
 
@@ -99,5 +102,8 @@ a-i opri pornirea automata. Nu sterge folderele generale `atmosphere` sau `switc
 - Dupa salvare si repornire sunt pastrate toate cele patru profiluri.
 - Suspendarea si revenirea din sleep nu blocheaza consola.
 - Inchiderea overlay-ului lasa reglajele live active.
+- Paginile de informatii se deschid si afiseaza valori reale sau Indisponibil.
+- Luminozitatea si volumul corespund comenzilor selectate.
+- Raportul diagnostic apare pe SD; scurtaturile deschid overlay-urile existente.
 
 Nu sunt incluse sharpness spatial sau profiluri automate per joc.

@@ -10,7 +10,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 DOWNLOADS = ROOT / "build/downloads"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 ASSET = "Fizeau-2.8.3-5bf3f0d.zip"
 FIZEAU_URL = f"https://github.com/averne/Fizeau/releases/download/v2.8.3/{ASSET}"
 FIZEAU_HASH = "8c44d2cfee17c9020a1f5ba9223e260c96ea716bf016c7cd0371de0685835b85"
@@ -109,6 +109,7 @@ def main():
     bundle = {"sd/" + name: data for name, data in files.items()}
     bundle["optional/config-initiala.ini"] = neutral_config()
     bundle["INSTALL_RO.md"] = (ROOT / "docs/INSTALL_RO.md").read_bytes()
+    bundle["TOOLKIT_RO.md"] = (ROOT / "docs/TOOLKIT_RO.md").read_bytes()
     bundle["manifest.json"] = manifest_bytes
     for name in ("LICENSE", "THIRD_PARTY.md"):
         bundle[name] = (ROOT / name).read_bytes()
@@ -117,7 +118,8 @@ def main():
     bundle["licenses/inih-LICENSE.txt"] = (ROOT / "third_party/fizeau/lib/inih/inih/LICENSE.txt").read_bytes()
     zip_bytes(DIST / f"SwitchColor-{VERSION}-SwitchLite.zip", bundle)
     zip_bytes(DIST / f"SwitchColor-{VERSION}-overlay-only.zip",
-              {"switch/.overlays/SwitchColor.ovl": ovl, "LICENSE": (ROOT / "LICENSE").read_bytes()})
+              {"switch/.overlays/SwitchColor.ovl": ovl, "LICENSE": (ROOT / "LICENSE").read_bytes(),
+               "TOOLKIT_RO.md": (ROOT / "docs/TOOLKIT_RO.md").read_bytes()})
     (DIST / "SwitchColor.ovl").write_bytes(ovl)
 
     source_files = {}

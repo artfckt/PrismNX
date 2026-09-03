@@ -3,6 +3,9 @@
 
 namespace sc {
 Outcome Controller::open() {
+    // Re-entering a page must not turn an unresolved hardware apply into a
+    // verified state merely by reconnecting and reading the stored profile.
+    if (uncertain_) return {InvalidState, 0, true};
     close();
     if (auto rc = backend_.connect()) return {rc};
     connected_ = true;

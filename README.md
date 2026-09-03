@@ -1,10 +1,11 @@
 # SwitchColor
 
-Overlay nativ pentru controlul imaginii pe **Nintendo Switch Lite modat**, prin
-Tesla sau Ultrahand si serviciul Fizeau. Tinta comunicata: Atmosphere 1.11.2|S,
+Toolkit overlay nativ pentru **Nintendo Switch Lite modat**: imagine,
+informatii live, control rapid si acces la unelte, prin Tesla/Ultrahand.
+Reglajele de culoare folosesc serviciul Fizeau. Tinta comunicata: Atmosphere 1.11.2|S,
 firmware 20.5.0. Versiunea firmware este pastrata exact cum a fost raportata.
 
-**Stare:** prima versiune 0.1.0, compilata ARM64 si testata pe calculator.
+**Stare:** versiunea 0.2.0, compilata ARM64 si testata pe calculator.
 Nu a fost testata pe consola. Compatibilitatea efectiva cu configuratia de mai
 sus trebuie verificata pe Switch; compilarea nu o certifica.
 
@@ -12,7 +13,11 @@ sus trebuie verificata pe Switch; compilarea nu o certifica.
 
 - Saturatie, contrast, gamma, temperatura culorilor, nuanta si luminanta.
 - Slidere cu D-pad si atingere; aplicare live cu limitarea frecventei IPC.
-- Preseturi manuale Standard, Vibrant, Cinema si Night.
+- 18 preseturi in patru categorii: stil OLED, contrast, cald si creativ.
+- Meniu central cu sapte pagini de informatii reale despre consola.
+- Baterie, temperaturi, frecvente CPU/GPU/EMC, retea, firmware si stocare SD.
+- Luminozitate fizica si volum, cu verificarea valorii dupa modificare.
+- Export diagnostic local si scurtaturi catre patru overlay-uri instalate.
 - Activare/dezactivare, resetare neutra, restaurarea starii de la deschidere.
 - Salvare explicita pentru repornire, cu pastrarea primei copii de rezerva.
 - Erori vizibile si recuperare explicita dupa un rezultat IPC incert.
@@ -28,10 +33,12 @@ canalele si filtrul existent. Preseturile/resetarea activeaza toate canalele,
 elimina filtrul monocrom, restabilesc intervalul RGB complet si opresc dimming-ul
 Fizeau. Starea Pornita/Oprita ramane la alegerea utilizatorului.
 
+Vezi [ghidul toolkit si directiile urmatoare](docs/TOOLKIT_RO.md).
+
 ## Instalare
 
 Citeste [ghidul de instalare](docs/INSTALL_RO.md). Pachetul complet este generat
-in `dist/SwitchColor-0.1.0-SwitchLite.zip`; contine `sd/` pentru fisierele de pe
+in `dist/SwitchColor-0.2.0-SwitchLite.zip`; contine `sd/` pentru fisierele de pe
 card si `optional/config-initiala.ini` doar pentru o instalare Fizeau noua.
 
 Nu include Tesla/Ultrahand sau nx-ovlloader. Foloseste instalarea compatibila
@@ -68,10 +75,12 @@ Pentru Linux: `make`, `make test`, `python3 scripts/prepare_backend.py`, apoi
 `make -C build/fizeau-backend/sysmodule` intr-un mediu devkitPro. Python trebuie
 sa fie accesibil si in shell-ul care executa `make`.
 
-Structura: `source/main.cpp` este interfata; `model.cpp` defineste reglajele;
-`backend.cpp` verifica tranzactiile; `switch_backend.cpp` foloseste IPC real;
-`storage.cpp` scrie configuratia. Sursele complete folosite pentru pachet sunt
-incluse separat in arhiva `SwitchColor-0.1.0-source.zip`.
+Structura: `main.cpp` este meniul central; `*_ui.cpp` contin paginile;
+`ui.cpp` contine starea si elementele comune; `telemetry.cpp` citeste serviciile
+si executa comenzile rapide; `presets.cpp` defineste catalogul. `model.cpp`
+defineste reglajele; `backend.cpp` verifica tranzactiile; `switch_backend.cpp`
+foloseste IPC real; `storage.cpp` scrie configuratia. Sursele complete folosite pentru pachet sunt
+incluse separat in arhiva `SwitchColor-0.2.0-source.zip`.
 
 ## Verificare
 

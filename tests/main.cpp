@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "backend.hpp"
+#include "presets.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -70,12 +71,27 @@ void modelTests() {
     auto invalid = initialState();
     invalid.profiles[3].day_settings = bad;
     assert(!validSnapshot(invalid));
-    for (int i = 0; i < 4; ++i) {
+    std::set<std::string> names;
+    unsigned grouped = 0;
+    for (unsigned group = 0; group < static_cast<unsigned>(PresetGroup::Count); ++group) {
+        const auto count = presetGroupCount(static_cast<PresetGroup>(group));
+        assert(count > 0);
+        grouped += count;
+    }
+    assert(grouped == 18 && presetCatalog().size() == 18);
+    for (unsigned i = 0; i < presetCatalog().size(); ++i) {
         auto s = initialState();
-        s.profiles[0] = manualProfile(s.profiles[0], presetSettings(static_cast<Preset>(i)), true);
+        const auto id = static_cast<Preset>(i);
+        const auto& entry = presetInfo(id);
+        assert(entry.id == id && names.insert(entry.name).second);
+        assert(entry.description[0] != '\0');
+        assert(static_cast<unsigned>(entry.group) < static_cast<unsigned>(PresetGroup::Count));
+        s.profiles[0] = manualProfile(s.profiles[0], presetSettings(id), true);
         assert(validSnapshot(s));
         assert(s.profiles[0].day_settings.temperature == s.profiles[0].night_settings.temperature);
     }
+    assert(presetInfo(static_cast<Preset>(999)).id == Preset::Standard);
+    assert(presetSettings(Preset::Monochrome).saturation == 0);
     std::cout << "PASS model: bounds, non-finite input, presets, IPC ABI\n";
 }
 
@@ -135,6 +151,10 @@ void controllerTests() {
         // Readback alone cannot confirm that the hardware apply succeeded.
         assert(r.uncertain && !c.ready());
         assert(!c.refresh());
+        const int readsBeforeRetry = b.reads;
+        const auto retry = c.open();
+        assert(!retry && retry.uncertain && !c.ready());
+        assert(b.opened && b.reads == readsBeforeRetry);
         assert(c.recover()); assert(c.ready());
     }
     {

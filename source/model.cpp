@@ -29,17 +29,6 @@ FizeauSettings neutralSettings() {
         DEFAULT_GAMMA, DEFAULT_LUMA, DEFAULT_RANGE};
 }
 
-FizeauSettings presetSettings(Preset preset) {
-    auto s = neutralSettings();
-    switch (preset) {
-        case Preset::Vibrant: s.saturation = 1.20f; s.contrast = 1.08f; break;
-        case Preset::Cinema: s.temperature = 6000; s.saturation = 0.95f; s.contrast = 1.04f; break;
-        case Preset::Night: s.temperature = 4000; s.saturation = 0.90f; s.luminance = -0.10f; break;
-        default: break;
-    }
-    return s;
-}
-
 FizeauSettings sanitize(FizeauSettings s) {
     s.temperature = std::clamp(s.temperature, MIN_TEMP, MAX_TEMP);
     s.saturation = bounded(s.saturation, MIN_SAT, MAX_SAT, DEFAULT_SAT);

@@ -26,7 +26,7 @@ build/%.o: source/%.cpp
 build/tesla/include/tesla.hpp: third_party/fizeau/lib/libtesla/include/tesla.hpp scripts/prepare_tesla.py
 	python3 scripts/prepare_tesla.py
 
-build/main.o build/tesla_impl.o: build/tesla/include/tesla.hpp
+build/main.o build/tesla_impl.o build/ui.o build/color_ui.o build/system_ui.o build/tools_ui.o: build/tesla/include/tesla.hpp
 
 build/fizeau.o: $(FIZEAU)/src/fizeau.c
 	@mkdir -p build
@@ -38,14 +38,14 @@ out/SwitchColor.elf: $(OBJECTS)
 
 out/SwitchColor.nacp: Makefile
 	@mkdir -p out
-	nacptool --create "SwitchColor" "SwitchColor contributors" "0.1.0" $@
+	nacptool --create "SwitchColor" "SwitchColor contributors" "0.2.0" $@
 
 out/SwitchColor.ovl: out/SwitchColor.elf out/SwitchColor.nacp
 	elf2nro $< $@ --nacp=out/SwitchColor.nacp
 
 test:
 	@mkdir -p build
-	g++ -std=gnu++20 -O1 -g -Wall -Wextra -Werror -DSC_STORAGE_LINK_WRAPS -Itests/stubs -Iinclude -I$(FIZEAU)/include source/model.cpp source/backend.cpp source/storage.cpp tests/main.cpp tests/storage_test.cpp -Wl,--wrap=rename,--wrap=fwrite -o build/tests.exe
+	g++ -std=gnu++20 -O1 -g -Wall -Wextra -Werror -DSC_STORAGE_LINK_WRAPS -Itests/stubs -Iinclude -I$(FIZEAU)/include source/model.cpp source/presets.cpp source/backend.cpp source/storage.cpp tests/main.cpp tests/storage_test.cpp -Wl,--wrap=rename,--wrap=fwrite -o build/tests.exe
 	./build/tests.exe
 
 -include $(OBJECTS:.o=.d)

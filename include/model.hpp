@@ -14,7 +14,9 @@ struct Snapshot {
 };
 
 enum class Control { Saturation, Contrast, Gamma, Temperature, Hue, Luminance };
-enum class Preset { Standard, Vibrant, Cinema, Night };
+enum class Preset { Standard, Vibrant, Cinema, Night, OledSoft, OledVivid,
+    DeepColors, HighContrast, SoftContrast, ShadowBoost, Warm, WarmPlus,
+    Amber, Reading, Cool, Retro, Monochrome, Pastel, Count };
 
 FizeauSettings neutralSettings();
 FizeauSettings presetSettings(Preset preset);
