@@ -10,7 +10,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 DOWNLOADS = ROOT / "build/downloads"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 ASSET = "Fizeau-2.8.3-5bf3f0d.zip"
 FIZEAU_URL = f"https://github.com/averne/Fizeau/releases/download/v2.8.3/{ASSET}"
 FIZEAU_HASH = "8c44d2cfee17c9020a1f5ba9223e260c96ea716bf016c7cd0371de0685835b85"
@@ -41,7 +41,7 @@ def revision(path, fallback):
 
 
 def neutral_config():
-    text = "; SwitchColor: initial neutral configuration; use only if no config exists.\n"
+    text = "; PrismNX: initial neutral configuration; use only if no config exists.\n"
     text += "active = true\nhandheld_profile = profile1\ndocked_profile = profile2\n\n"
     settings = {"temperature": "6500", "saturation": "1.0", "hue": "0.0",
                 "contrast": "1.0", "gamma": "2.4", "luminance": "0.0", "range": "0.0-1.0"}
@@ -96,8 +96,8 @@ def main():
             if not data.startswith(b"PATCH"):
                 raise RuntimeError(f"Invalid IPS file: {name}")
             files[name] = data
-    manifest = {"project": "SwitchColor", "version": VERSION,
-                "target_reported": {"model": "Switch Lite", "atmosphere": "1.11.2|S", "firmware": "20.5.0"},
+    manifest = {"project": "PrismNX", "version": VERSION,
+                "target": {"model": "Switch Lite", "custom_firmware": "Atmosphere"},
                 "console_tested": False,
                 "toolchain": {"devkitA64": "r30-1", "libnx": "4.12.0-1", "switch-glm": "0.9.9.7-2"},
                 "fizeau": {"version": "2.8.3 + local EOF fix", "source_revision":
@@ -107,19 +107,19 @@ def main():
     manifest_bytes = (json.dumps(manifest, indent=2) + "\n").encode()
     (DIST / "manifest.json").write_bytes(manifest_bytes)
     bundle = {"sd/" + name: data for name, data in files.items()}
-    bundle["optional/config-initiala.ini"] = neutral_config()
-    bundle["INSTALL_RO.md"] = (ROOT / "docs/INSTALL_RO.md").read_bytes()
-    bundle["TOOLKIT_RO.md"] = (ROOT / "docs/TOOLKIT_RO.md").read_bytes()
+    bundle["optional/config-initial.ini"] = neutral_config()
+    bundle["INSTALL.md"] = (ROOT / "docs/INSTALL.md").read_bytes()
+    bundle["TOOLKIT.md"] = (ROOT / "docs/TOOLKIT.md").read_bytes()
     bundle["manifest.json"] = manifest_bytes
     for name in ("LICENSE", "THIRD_PARTY.md"):
         bundle[name] = (ROOT / name).read_bytes()
     bundle["licenses/Fizeau-LICENSE"] = (ROOT / "third_party/fizeau/LICENSE").read_bytes()
     bundle["licenses/libtesla-LICENSE"] = (ROOT / "third_party/fizeau/lib/libtesla/LICENSE").read_bytes()
     bundle["licenses/inih-LICENSE.txt"] = (ROOT / "third_party/fizeau/lib/inih/inih/LICENSE.txt").read_bytes()
-    zip_bytes(DIST / f"SwitchColor-{VERSION}-SwitchLite.zip", bundle)
-    zip_bytes(DIST / f"SwitchColor-{VERSION}-overlay-only.zip",
+    zip_bytes(DIST / f"PrismNX-{VERSION}-SwitchLite.zip", bundle)
+    zip_bytes(DIST / f"PrismNX-{VERSION}-overlay-only.zip",
               {"switch/.overlays/SwitchColor.ovl": ovl, "LICENSE": (ROOT / "LICENSE").read_bytes(),
-               "TOOLKIT_RO.md": (ROOT / "docs/TOOLKIT_RO.md").read_bytes()})
+               "TOOLKIT.md": (ROOT / "docs/TOOLKIT.md").read_bytes()})
     (DIST / "SwitchColor.ovl").write_bytes(ovl)
 
     source_files = {}
@@ -146,9 +146,9 @@ def main():
             if archive.testzip() is not None: raise RuntimeError(f"Invalid source archive: {name}")
         source_files["third_party/source-archives/" + name] = path.read_bytes()
     source_files["BUILD_MANIFEST.json"] = manifest_bytes
-    zip_bytes(DIST / f"SwitchColor-{VERSION}-source.zip", source_files)
+    zip_bytes(DIST / f"PrismNX-{VERSION}-source.zip", source_files)
     checksums = []
-    for path in sorted(DIST.glob("*.zip")):
+    for path in sorted(DIST.glob(f"PrismNX-{VERSION}-*.zip")):
         checksums.append(f"{digest(path.read_bytes())}  {path.name}")
         print(f"{path.name}: {path.stat().st_size:,} bytes")
     checksums.append(f"{digest(ovl)}  SwitchColor.ovl")

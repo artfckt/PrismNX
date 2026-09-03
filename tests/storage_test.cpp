@@ -174,7 +174,7 @@ void runStorageTests() {
     result = sc::saveSnapshot(s, faulty);
     renameFailureMask = 0;
     require(!result.ok && !exists(faulty.preferred), "double rename failure reported success");
-    require(result.message.find("RESTAURARE ESUATA") != std::string::npos, "rollback failure was not explicit");
+    require(result.message.find("RESTORE FAILED") != std::string::npos, "rollback failure was not explicit");
     require(read(faulty.preferred + ".switchcolor.rollback") == original, "failed recovery lost original");
     require(read(faulty.preferred + ".switchcolor.bak") == original, "failed recovery lost immutable backup");
     result = sc::saveSnapshot(s, faulty);

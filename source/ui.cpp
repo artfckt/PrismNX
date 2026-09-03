@@ -7,13 +7,13 @@ App app;
 void App::report(Outcome outcome, const char* success) {
     last = outcome;
     if (outcome) status = success;
-    else if (outcome.error == ServiceMissing) status = "Serviciul Fizeau nu ruleaza.";
-    else if (outcome.error == StateChanged) status = "Starea s-a schimbat. Reincearca.";
-    else if (outcome.uncertain) status = "Stare incerta. Foloseste Recuperare sau reporneste consola.";
-    else if (outcome.error == InvalidState) status = "Configuratie Fizeau invalida.";
-    else status = "Operatia a esuat. Vezi detalii.";
+    else if (outcome.error == ServiceMissing) status = "The Fizeau service is not running.";
+    else if (outcome.error == StateChanged) status = "The state changed. Try again.";
+    else if (outcome.uncertain) status = "Uncertain state. Use recovery or restart the console.";
+    else if (outcome.error == InvalidState) status = "Invalid Fizeau configuration.";
+    else status = "The operation failed. See details.";
 }
-// ASCII Romanian is intentional: keeps all labels readable with system fonts.
+// ASCII labels remain readable with the system fonts.
 void paragraph(tsl::elm::List* list, const std::string& text) {
     std::vector<std::string> lines;
     std::string line, word;
@@ -61,10 +61,10 @@ class MessageGui final : public tsl::Gui {
 public:
     MessageGui(std::string title, std::string body) : title_(std::move(title)), body_(std::move(body)) {}
     tsl::elm::Element* createUI() override {
-        auto* frame = new tsl::elm::OverlayFrame("SwitchColor", title_);
+        auto* frame = new tsl::elm::OverlayFrame("PrismNX", title_);
         auto* list = new tsl::elm::List();
         paragraph(list, body_);
-        action(list, "Inapoi", [this] { back_ = true; });
+        action(list, "Back", [this] { back_ = true; });
         frame->setContent(list);
         return frame;
     }
@@ -79,21 +79,21 @@ void showStatus() {
     auto message = app.status;
     if (!app.last) {
         char codes[110];
-        std::snprintf(codes, sizeof(codes), "\nCod: %08X\nRecuperare: %08X\nNecesita recuperare: %s",
-            app.last.error, app.last.recoveryError, app.last.uncertain ? "da" : "nu");
+        std::snprintf(codes, sizeof(codes), "\nCode: %08X\nRecovery: %08X\nRecovery required: %s",
+            app.last.error, app.last.recoveryError, app.last.uncertain ? "yes" : "no");
         message += codes;
     }
-    tsl::changeTo<MessageGui>("Stare", message);
+    tsl::changeTo<MessageGui>("Status", message);
 }
 
 void saveColors() {
     if (!app.controller.ready()) {
-        app.status = "Salvare blocata: starea live nu este verificata. Foloseste Recuperare sau reporneste consola.";
+        app.status = "Save blocked: live state is unverified. Use recovery or restart the console.";
         showStatus();
         return;
     }
     if (!app.sdMounted) {
-        app.status = "Cardul SD nu poate fi accesat.";
+        app.status = "The SD card cannot be accessed.";
         app.last = {};
     } else {
         const auto fresh = app.controller.refresh();
@@ -102,7 +102,7 @@ void saveColors() {
             const auto result = saveSnapshot(app.controller.current());
             app.last = {};
             app.status = result.message;
-            if (result.ok) app.status += "\nConfiguratie: " + result.path;
+            if (result.ok) app.status += "\nConfiguration: " + result.path;
             if (!result.backupPath.empty()) app.status += "\nBackup: " + result.backupPath;
         }
     }

@@ -7,10 +7,10 @@ namespace sc::ui {
 namespace {
 struct Companion { const char* name; const char* file; const char* description; };
 constexpr Companion Companions[] = {
-    {"Status Monitor", "Status-Monitor-Overlay.ovl", "Monitorizarea performantei si a senzorilor prin overlay-ul instalat."},
-    {"FPSLocker", "FPSLocker.ovl", "Instrumentul FPSLocker instalat. Functiile disponibile depind de joc si de dependentele sale."},
-    {"sys-clk", "sys-clk-overlay.ovl", "Deschide interfata sys-clk instalata pentru profilurile de frecventa."},
-    {"Sysmodules", "ovlSysmodules.ovl", "Deschide managerul de module instalat pe consola."}
+    {"Status Monitor", "Status-Monitor-Overlay.ovl", "Performance and sensor monitoring through the installed overlay."},
+    {"FPSLocker", "FPSLocker.ovl", "The installed FPSLocker tool. Available features depend on the game and its dependencies."},
+    {"sys-clk", "sys-clk-overlay.ovl", "Open the installed sys-clk interface for clock profiles."},
+    {"Sysmodules", "ovlSysmodules.ovl", "Open the installed system module manager."}
 };
 std::string companionPath(const Companion& companion) {
     return std::string("sdmc:/switch/.overlays/") + companion.file;
@@ -31,11 +31,11 @@ class ToolDetailGui final : public tsl::Gui {
 public:
     explicit ToolDetailGui(unsigned index) : companion_(Companions[index]) {}
     tsl::elm::Element* createUI() override {
-        auto* frame = new tsl::elm::OverlayFrame("SwitchColor", companion_.name);
+        auto* frame = new tsl::elm::OverlayFrame("PrismNX", companion_.name);
         auto* list = new tsl::elm::List();
         paragraph(list, companion_.description);
-        paragraph(list, "Lansarea inchide SwitchColor si deschide unealta selectata. Setarile imaginii raman active.");
-        action(list, "Deschide overlay", [this] { launch_ = true; });
+        paragraph(list, "Launching closes PrismNX and opens the selected tool. Display settings stay active.");
+        action(list, "Open overlay", [this] { launch_ = true; });
         frame->setContent(list); return frame;
     }
     void update() override {
@@ -43,7 +43,7 @@ public:
         launch_ = false;
         const auto path = companionPath(companion_);
         if (!app.sdMounted || !validOverlay(path)) {
-            showMessage("Lansare", "Fisierul overlay lipseste sau nu are un antet NRO valid.\n" + path);
+            showMessage("Launch", "The overlay file is missing or has an invalid NRO header.\n" + path);
             return;
         }
         // This pinned libtesla appends --skipCombo but does not add argv[0].
@@ -57,13 +57,13 @@ private:
 class ToolsGui final : public tsl::Gui {
 public:
     tsl::elm::Element* createUI() override {
-        auto* frame = new tsl::elm::OverlayFrame("SwitchColor", "Overlay-uri instalate");
+        auto* frame = new tsl::elm::OverlayFrame("PrismNX", "Installed overlays");
         auto* list = new tsl::elm::List();
         for (unsigned i = 0; i < sizeof(Companions) / sizeof(Companions[0]); ++i) {
             const bool exists = app.sdMounted && installed(companionPath(Companions[i]));
-            action(list, Companions[i].name, [i] { tsl::changeTo<ToolDetailGui>(i); }, exists ? "Instalat" : "Lipseste");
+            action(list, Companions[i].name, [i] { tsl::changeTo<ToolDetailGui>(i); }, exists ? "Installed" : "Missing");
         }
-        paragraph(list, "Scurtaturi catre unelte separate de pe card. Functiile lor raman in interfata fiecarei aplicatii.");
+        paragraph(list, "Shortcuts to separate tools on the SD card. Each tool retains its own interface and features.");
         frame->setContent(list); return frame;
     }
 };

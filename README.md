@@ -1,94 +1,82 @@
-# SwitchColor
+# PrismNX
 
-Toolkit overlay nativ pentru **Nintendo Switch Lite modat**: imagine,
-informatii live, control rapid si acces la unelte, prin Tesla/Ultrahand.
-Reglajele de culoare folosesc serviciul Fizeau. Tinta comunicata: Atmosphere 1.11.2|S,
-firmware 20.5.0. Versiunea firmware este pastrata exact cum a fost raportata.
+**Color your games. Know your console.**
 
-**Stare:** versiunea 0.2.0, compilata ARM64 si testata pe calculator.
-Nu a fost testata pe consola. Compatibilitatea efectiva cu configuratia de mai
-sus trebuie verificata pe Switch; compilarea nu o certifica.
+PrismNX is a native Nintendo Switch overlay with live color controls, 18 visual
+presets, console telemetry and quick brightness/audio controls. Designed for
+Switch Lite running Atmosphere, it opens through Tesla or Ultrahand and uses
+Fizeau for color processing. Previously named SwitchColor.
 
-## Ce include
+[Download the latest release](https://github.com/DannyDulgheru/PrismNX/releases/latest)
+| [Installation](docs/INSTALL.md) | [User guide](docs/TOOLKIT.md)
 
-- Saturatie, contrast, gamma, temperatura culorilor, nuanta si luminanta.
-- Slidere cu D-pad si atingere; aplicare live cu limitarea frecventei IPC.
-- 18 preseturi in patru categorii: stil OLED, contrast, cald si creativ.
-- Meniu central cu sapte pagini de informatii reale despre consola.
-- Baterie, temperaturi, frecvente CPU/GPU/EMC, retea, firmware si stocare SD.
-- Luminozitate fizica si volum, cu verificarea valorii dupa modificare.
-- Export diagnostic local si scurtaturi catre patru overlay-uri instalate.
-- Activare/dezactivare, resetare neutra, restaurarea starii de la deschidere.
-- Salvare explicita pentru repornire, cu pastrarea primei copii de rezerva.
-- Erori vizibile si recuperare explicita dupa un rezultat IPC incert.
+## Features
 
-**Sharpness spatial nu este implementat.** Fizeau modifica fiecare pixel prin
-matrice de culoare si LUT; accentuarea contururilor necesita acces la pixelii
-vecini. Luminanta ajusteaza tonurile imaginii, nu lumina de fundal a ecranului.
+- Saturation, contrast, gamma, color temperature, hue and luminance sliders.
+- 18 presets: natural/OLED styles, contrast, warm/cinema/evening and creative.
+- Seven information pages covering battery, temperatures, CPU/GPU/EMC clocks,
+  network, firmware, active Title ID and SD storage.
+- Quick backlight and active-output volume controls, with readback verification.
+- Local diagnostic reports and shortcuts to installed Status Monitor,
+  FPSLocker, sys-clk and Sysmodules overlays.
+- Explicit save, opening-state restoration, retained backups and recovery
+  after uncertain color operations.
 
-Setarile sunt globale pentru ecranul intern, nu profiluri automate per joc.
-Prima modificare a unui slider foloseste valorile de zi ca punct de plecare si
-le aplica atat ziua, cat si noaptea. Sliderele pastreaza programul, dimming-ul,
-canalele si filtrul existent. Preseturile/resetarea activeaza toate canalele,
-elimina filtrul monocrom, restabilesc intervalul RGB complet si opresc dimming-ul
-Fizeau. Starea Pornita/Oprita ramane la alegerea utilizatorului.
+**Version 0.3.0:** English interface, preset descriptions, errors and guides.
+The ARM64 build and host regression tests pass. Console runtime behavior has
+not yet been confirmed; see the [validation record](docs/VALIDATION.md).
 
-Vezi [ghidul toolkit si directiile urmatoare](docs/TOOLKIT_RO.md).
+OLED presets are aesthetic LCD color adjustments, not OLED panel emulation.
+Spatial sharpening and automatic per-game profiles are not implemented.
+Clock readings are not CPU/GPU utilization or FPS.
 
-## Instalare
+## Install or upgrade
 
-Citeste [ghidul de instalare](docs/INSTALL_RO.md). Pachetul complet este generat
-in `dist/SwitchColor-0.2.0-SwitchLite.zip`; contine `sd/` pentru fisierele de pe
-card si `optional/config-initiala.ini` doar pentru o instalare Fizeau noua.
+For a new installation, use `PrismNX-0.3.0-SwitchLite.zip` and follow
+[INSTALL.md](docs/INSTALL.md). Existing SwitchColor users can use
+`PrismNX-0.3.0-overlay-only.zip`.
 
-Nu include Tesla/Ultrahand sau nx-ovlloader. Foloseste instalarea compatibila
-de pe consola. Overlay-ul nu inlocuieste meniul acestora.
+The filename remains **`switch/.overlays/SwitchColor.ovl`** for in-place upgrades;
+the overlay displays **PrismNX**. Existing Fizeau settings, backup suffixes and
+`config/SwitchColor/reports/` are retained. Do not install a second copy under
+another filename. The release does not include Tesla/Ultrahand or nx-ovlloader.
 
-Backend-ul distribuit este **Fizeau 2.8.3 + o corectie locala la citirea ultimului
-profil din configuratie**. Nu este o versiune oficiala Fizeau noua. Corectia
-este in `patches/fizeau-config-eof.patch`; codul upstream ramane nemodificat
-in submodul. Sunt incluse patch-urile CMU din arhiva oficiala verificata SHA256.
+The full package contains Fizeau 2.8.3 with a documented local fix for reading
+the final profile, plus the official CMU patches. It does not contain an
+active replacement Fizeau configuration; a neutral template is optional.
 
-## Compilare pe Windows
+## Build
 
-Necesita devkitPro, devkitA64, libnx, switch-glm, Python 3 si MSYS2.
-Testele pe calculator folosesc pachetul MSYS2 `gcc`.
+Requires devkitPro, devkitA64, libnx, switch-glm, Python 3 and MSYS2 on Windows.
+Host tests use the MSYS2 `gcc` package. Tested SDK versions are in the manifest.
 
 ```powershell
+git clone https://github.com/DannyDulgheru/PrismNX.git
+cd PrismNX
 git submodule update --init third_party/fizeau
 git -C third_party/fizeau submodule update --init lib/libtesla lib/inih/inih
-.\scripts\build.ps1 -DevkitPro 'E:\Code\devkitPro'
-.\scripts\build.ps1 -DevkitPro 'E:\Code\devkitPro' -Test
-.\scripts\build-backend.ps1 -DevkitPro 'E:\Code\devkitPro'
-python tests/test_backend_boot.py --bash 'E:\Code\devkitPro\msys2\usr\bin\bash.exe'
+.\scripts\build.ps1 -DevkitPro 'C:\devkitPro'
+.\scripts\build.ps1 -DevkitPro 'C:\devkitPro' -Test
+.\scripts\build-backend.ps1 -DevkitPro 'C:\devkitPro'
+python tests/test_backend_boot.py --bash 'C:\devkitPro\msys2\usr\bin\bash.exe'
 python scripts/package.py
 ```
 
-Pentru arhiva de surse extrasa, omite cele doua comenzi `git submodule`:
-dependentele folosite sunt deja incluse.
+Adjust the SDK path to your installation. For the complete source release,
+skip the clone/submodule steps: the used dependency sources are included.
+Additional MSYS2 packages: `pacman -S --needed gcc switch-glm`.
 
-In MSYS2, pachetele suplimentare se instaleaza prin
-`pacman -S --needed gcc switch-glm`. `scripts/package.py` descarca numai arhiva
-oficiala Fizeau v2.8.3, verifica hash-ul fixat si extrage patch-urile CMU.
+Linux/devkitPro: `make`, `make test`, `python3 scripts/prepare_backend.py`,
+then `make -C build/fizeau-backend/sysmodule` and `python3 scripts/package.py`.
+Python must be accessible from the shell running make.
 
-Pentru Linux: `make`, `make test`, `python3 scripts/prepare_backend.py`, apoi
-`make -C build/fizeau-backend/sysmodule` intr-un mediu devkitPro. Python trebuie
-sa fie accesibil si in shell-ul care executa `make`.
+`main.cpp` provides the hub; `*_ui.cpp` provide pages; `telemetry.cpp` reads
+console services. `presets.cpp` defines the catalog; `backend.cpp` verifies
+color transactions; `switch_backend.cpp` handles IPC; `storage.cpp` saves
+configuration. See [architecture](docs/design.md) for details.
 
-Structura: `main.cpp` este meniul central; `*_ui.cpp` contin paginile;
-`ui.cpp` contine starea si elementele comune; `telemetry.cpp` citeste serviciile
-si executa comenzile rapide; `presets.cpp` defineste catalogul. `model.cpp`
-defineste reglajele; `backend.cpp` verifica tranzactiile; `switch_backend.cpp`
-foloseste IPC real; `storage.cpp` scrie configuratia. Sursele complete folosite pentru pachet sunt
-incluse separat in arhiva `SwitchColor-0.2.0-source.zip`.
+## License and credits
 
-## Verificare
-
-Testele executa codul de productie pentru limite numerice, NaN/Inf, preseturi,
-structuri IPC, serviciu absent, rollback, stare incerta, conservarea profilurilor,
-precedenta fisierelor, backup, scrieri incomplete si erori de redenumire.
-Testul de pornire foloseste parserul real Fizeau/inih si demonstreaza regresia
-ultimului profil si corectia. Nu simuleaza driverul video sau hardware-ul CMU.
-
-Vezi [licentele si dependentele](THIRD_PARTY.md). Codul SwitchColor este
-GPL-2.0-or-later.
+GPL-2.0-or-later. Original dependency notices are retained.
+Thanks to averne/Fizeau, WerWolv/libtesla, switchbrew/libnx, benhoyt/inih and GLM.
+See [THIRD_PARTY.md](THIRD_PARTY.md) for revisions and local patches.

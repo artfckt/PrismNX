@@ -1,12 +1,12 @@
-# Validation record РІР‚вЂќ 2026-09-03
+# Validation record Р Р†Р вЂљРІР‚Сњ 2026-09-03
 
-Target supplied by user: Switch Lite, Atmosphere 1.11.2|S, firmware 20.5.0.
+Target platform: Switch Lite with Atmosphere.
 The SD card was accessed through the user-authorized FTP endpoint. No
 console runtime behavior has been observed or confirmed.
 
 ## Completed
 
-- ARM64 cross-compilation of SwitchColor 0.2.0 using devkitA64 r30-1 /
+- ARM64 cross-compilation of PrismNX 0.3.0 using devkitA64 r30-1 /
   GCC 16.1.0 and libnx 4.12.0-1. ELF machine = AArch64; output has NRO0 and
   ASET metadata headers. Final binaries are hashed in `dist/manifest.json`.
 - ARM64 build of Fizeau v2.8.3 with the documented EOF profile patch.
@@ -59,3 +59,9 @@ Day/night color settings are deliberately unified by manual edits. Runtime
 restore is separate from disk save. Power-loss atomicity on an SD filesystem
 cannot be guaranteed by host fault injection; recovery/backup files are kept
 and unresolved staged files block further saves.
+
+## English release
+
+Version 0.3.0 translates the interface, preset descriptions, diagnostics,
+storage errors and public guides to English. Legacy installation and recovery
+paths are retained to support in-place upgrades from SwitchColor.

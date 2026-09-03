@@ -1,4 +1,4 @@
-"""Upgrade only SwitchColor.ovl on the user's ftpsrv SD mount, with backup/readback."""
+"""Upgrade PrismNX using the legacy SwitchColor.ovl filename on the user's ftpsrv SD mount, with backup/readback."""
 from argparse import ArgumentParser
 from datetime import datetime, timezone
 from ftplib import FTP, all_errors
@@ -20,7 +20,7 @@ def main():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("--host", required=True)
     parser.add_argument("--port", type=int, default=5000)
-    parser.add_argument("--package", type=Path, default=ROOT / "dist/SwitchColor-0.2.0-SwitchLite.zip")
+    parser.add_argument("--package", type=Path, default=ROOT / "dist/PrismNX-0.3.0-SwitchLite.zip")
     args = parser.parse_args()
     with zipfile.ZipFile(args.package) as archive:
         manifest = json.loads(archive.read("manifest.json"))

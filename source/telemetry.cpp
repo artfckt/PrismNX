@@ -17,7 +17,7 @@ template<typename... Args> std::string format(const char* pattern, Args... args)
     return text;
 }
 Metric metric(const char* label, Result error, std::string value) {
-    return {label, error ? "Indisponibil" : std::move(value), error};
+    return {label, error ? "Unavailable" : std::move(value), error};
 }
 template<typename Init> void initializeOptional(const char* name, Init init, bool& opened, Result& error) {
     // Atmosphere's presence probe avoids smGetService waiting for an absent
@@ -39,17 +39,17 @@ const char* modelName(SetSysProductModel model) {
         case SetSysProductModel_Aula: return "Switch OLED / Aula";
         case SetSysProductModel_Copper: return "Copper (simulation)";
         case SetSysProductModel_Calcio: return "Calcio (simulation)";
-        default: return "Model necunoscut";
+        default: return "Unknown model";
     }
 }
 const char* audioName(AudioTarget target) {
     switch (target) {
-        case AudioTarget_Speaker: return "Difuzoare";
-        case AudioTarget_Headphone: return "Casti";
+        case AudioTarget_Speaker: return "Speakers";
+        case AudioTarget_Headphone: return "Headphones";
         case AudioTarget_Tv: return "TV / HDMI";
         case AudioTarget_UsbOutputDevice: return "USB";
         case AudioTarget_Bluetooth: return "Bluetooth";
-        default: return "Indisponibil";
+        default: return "Unavailable";
     }
 }
 Result readAudio(QuickState& out, AudioTarget& target) {
@@ -60,7 +60,7 @@ Result readAudio(QuickState& out, AudioTarget& target) {
     if (!rc && (out.volumeMin < 0 || out.volumeMax <= out.volumeMin)) rc = InvalidReading;
     if (!rc) rc = audctlGetTargetVolume(&out.volume, target);
     if (!rc && (out.volume < out.volumeMin || out.volume > out.volumeMax)) rc = InvalidReading;
-    out.audioTarget = rc ? "Indisponibil" : audioName(target);
+    out.audioTarget = rc ? "Unavailable" : audioName(target);
     return rc;
 }
 Metric temperature(const char* label, u32 device, bool available, Result initError) {
@@ -87,33 +87,33 @@ Metric clock(const char* label, PcvModuleId module, bool available, Result initE
 Metric firmware() {
     SetSysFirmwareVersion version{};
     const auto rc = setsysGetFirmwareVersion(&version);
-    return metric("Firmware detectat", rc, format("%u.%u.%u", version.major, version.minor, version.micro));
+    return metric("Detected firmware", rc, format("%u.%u.%u", version.major, version.minor, version.micro));
 }
 Metric model() {
     SetSysProductModel value = SetSysProductModel_Invalid;
     auto rc = setsysGetProductModel(&value);
     if (!rc && value == SetSysProductModel_Invalid) rc = InvalidReading;
-    return metric("Consola", rc, modelName(value));
+    return metric("Console", rc, modelName(value));
 }
 Metric activeTitle() {
     u64 process = 0, title = 0;
     auto rc = pmdmntGetApplicationProcessId(&process);
     if (!rc) rc = pmdmntGetProgramId(&title, process);
-    return metric("Title ID activ", rc, format("%016llX", static_cast<unsigned long long>(title)));
+    return metric("Active Title ID", rc, format("%016llX", static_cast<unsigned long long>(title)));
 }
 }
 
 const char* infoPageLabel(InfoPage page) {
     switch (page) {
-        case InfoPage::Overview: return "Privire generala";
-        case InfoPage::Battery: return "Baterie";
-        case InfoPage::Temperature: return "Temperaturi";
-        case InfoPage::Clocks: return "Frecvente";
-        case InfoPage::Network: return "Retea";
-        case InfoPage::System: return "Sistem";
-        case InfoPage::Storage: return "Stocare SD";
+        case InfoPage::Overview: return "Overview";
+        case InfoPage::Battery: return "Battery";
+        case InfoPage::Temperature: return "Temperatures";
+        case InfoPage::Clocks: return "Clock rates";
+        case InfoPage::Network: return "Network";
+        case InfoPage::System: return "System";
+        case InfoPage::Storage: return "SD storage";
     }
-    return "Informatii";
+    return "Information";
 }
 
 void Telemetry::open() {
@@ -153,7 +153,7 @@ QuickState Telemetry::quickState() {
     result.brightnessError = validUnit(result.brightness, result.brightnessError);
     AudioTarget target = AudioTarget_Invalid;
     result.volumeError = audio_ ? readAudio(result, target) : unavailable(audioError_);
-    if (result.volumeError) result.audioTarget = "Indisponibil";
+    if (result.volumeError) result.audioTarget = "Unavailable";
     return result;
 }
 
@@ -196,28 +196,28 @@ std::vector<Metric> Telemetry::sample(InfoPage page) {
         u32 percent = 0;
         auto rc = psm_ ? psmGetBatteryChargePercentage(&percent) : unavailable(psmError_);
         if (!rc && percent > 100) rc = InvalidReading;
-        out.push_back(metric("Baterie", rc, format("%u%%", percent)));
+        out.push_back(metric("Battery", rc, format("%u%%", percent)));
         if (!overview) {
             double raw = 0, age = 0;
             rc = psm_ ? psmGetRawBatteryChargePercentage(&raw) : unavailable(psmError_);
             if (!rc && !std::isfinite(raw)) rc = InvalidReading;
-            out.push_back(metric("Incarcare bruta", rc, format("%.2f%%", raw)));
+            out.push_back(metric("Raw charge", rc, format("%.2f%%", raw)));
             rc = psm_ ? psmGetBatteryAgePercentage(&age) : unavailable(psmError_);
             if (!rc && !std::isfinite(age)) rc = InvalidReading;
-            out.push_back(metric("Capacitate ramasa (age)", rc, format("%.2f%%", age)));
+            out.push_back(metric("Remaining capacity", rc, format("%.2f%%", age)));
             PsmChargerType charger = PsmChargerType_Unconnected;
             rc = psm_ ? psmGetChargerType(&charger) : unavailable(psmError_);
-            const char* chargerName = charger == PsmChargerType_Unconnected ? "Neconectat" :
-                charger == PsmChargerType_EnoughPower ? "Putere suficienta" :
-                charger == PsmChargerType_LowPower ? "Putere redusa" :
-                charger == PsmChargerType_NotSupported ? "Nesuportat" : "Necunoscut";
-            out.push_back(metric("Incarcator", rc, chargerName));
+            const char* chargerName = charger == PsmChargerType_Unconnected ? "Disconnected" :
+                charger == PsmChargerType_EnoughPower ? "Sufficient power" :
+                charger == PsmChargerType_LowPower ? "Low power" :
+                charger == PsmChargerType_NotSupported ? "Unsupported" : "Unknown";
+            out.push_back(metric("Charger", rc, chargerName));
             PsmBatteryChargeInfoFields fields{};
             rc = psm_ ? psmGetBatteryChargeInfoFields(&fields) : unavailable(psmError_);
-            out.push_back(metric("Incarcare in curs", rc, fields.battery_charging ? "Da" : "Nu"));
-            out.push_back(metric("Tensiune baterie", rc, format("%u mV", fields.battery_charge_milli_voltage)));
-            out.push_back(metric("Temperatura baterie", rc, format("%.1f C", fields.temperature_celcius / 1000.0)));
-            out.push_back(metric("Limita curent incarcare", rc, format("%u mA", fields.fast_charge_current_limit)));
+            out.push_back(metric("Charging", rc, fields.battery_charging ? "Yes" : "No"));
+            out.push_back(metric("Battery voltage", rc, format("%u mV", fields.battery_charge_milli_voltage)));
+            out.push_back(metric("Battery temperature", rc, format("%.1f C", fields.temperature_celcius / 1000.0)));
+            out.push_back(metric("Charge current limit", rc, format("%u mA", fields.fast_charge_current_limit)));
         }
     }
     if (overview || page == InfoPage::Temperature) {
@@ -226,35 +226,35 @@ std::vector<Metric> Telemetry::sample(InfoPage page) {
             out.push_back(temperature("PCB", TsDeviceCode_LocationInternal, ts_, tsError_));
             s32 skin = 0;
             const auto rc = tc_ ? tcGetSkinTemperatureMilliC(&skin) : unavailable(tcError_);
-            out.push_back(metric("Carcasa (skin)", rc, format("%.1f C", skin / 1000.0)));
+            out.push_back(metric("Skin temperature", rc, format("%.1f C", skin / 1000.0)));
             PsmBatteryChargeInfoFields fields{};
             const auto batteryRc = psm_ ? psmGetBatteryChargeInfoFields(&fields) : unavailable(psmError_);
-            out.push_back(metric("Baterie", batteryRc, format("%.1f C", fields.temperature_celcius / 1000.0)));
+            out.push_back(metric("Battery", batteryRc, format("%.1f C", fields.temperature_celcius / 1000.0)));
         }
     }
     if (page == InfoPage::Clocks) {
         out.push_back(clock("CPU", PcvModuleId_CpuBus, clocks_, clockError_));
         out.push_back(clock("GPU", PcvModuleId_GPU, clocks_, clockError_));
-        out.push_back(clock("Memorie EMC", PcvModuleId_EMC, clocks_, clockError_));
+        out.push_back(clock("EMC memory", PcvModuleId_EMC, clocks_, clockError_));
     }
     if (overview || page == InfoPage::Network) {
         u32 address = 0;
         auto rc = nifm_ ? nifmGetCurrentIpAddress(&address) : unavailable(nifmError_);
         unsigned char bytes[4]; std::memcpy(bytes, &address, sizeof(bytes));
-        out.push_back(metric("IPv4 local", rc, format("%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3])));
+        out.push_back(metric("Local IPv4", rc, format("%u.%u.%u.%u", bytes[0], bytes[1], bytes[2], bytes[3])));
         if (!overview) {
             bool enabled = false;
             rc = nifm_ ? nifmIsWirelessCommunicationEnabled(&enabled) : unavailable(nifmError_);
-            out.push_back(metric("Radio Wi-Fi", rc, enabled ? "Activat" : "Dezactivat"));
+            out.push_back(metric("Wi-Fi radio", rc, enabled ? "Enabled" : "Disabled"));
             NifmInternetConnectionType type{}; NifmInternetConnectionStatus status{}; u32 bars = 0;
             rc = nifm_ ? nifmGetInternetConnectionStatus(&type, &bars, &status) : unavailable(nifmError_);
-            out.push_back(metric("Conexiune", rc, type == NifmInternetConnectionType_WiFi ? "Wi-Fi" :
-                type == NifmInternetConnectionType_Ethernet ? "Ethernet" : "Necunoscuta"));
-            out.push_back(metric("Stare internet", rc, status == NifmInternetConnectionStatus_Connected ? "Conectat" :
-                format("Conectare (cod %u)", static_cast<unsigned>(status))));
+            out.push_back(metric("Connection", rc, type == NifmInternetConnectionType_WiFi ? "Wi-Fi" :
+                type == NifmInternetConnectionType_Ethernet ? "Ethernet" : "Unknown"));
+            out.push_back(metric("Internet status", rc, status == NifmInternetConnectionStatus_Connected ? "Connected" :
+                format("Connecting (code %u)", static_cast<unsigned>(status))));
             const auto signalRc = !rc && type == NifmInternetConnectionType_WiFi && bars > 3 ? InvalidReading : rc;
-            out.push_back(metric("Semnal Wi-Fi", signalRc, type == NifmInternetConnectionType_WiFi ?
-                format("%u / 3 bare", bars) : "Nu se aplica"));
+            out.push_back(metric("Wi-Fi signal", signalRc, type == NifmInternetConnectionType_WiFi ?
+                format("%u / 3 bars", bars) : "Not applicable"));
         }
     }
     if (overview || page == InfoPage::Storage) {
@@ -264,13 +264,13 @@ std::vector<Metric> Telemetry::sample(InfoPage page) {
         auto freeRc = sd ? fsFsGetFreeSpace(sd, "/", &free) : NotReady;
         if (!freeRc && free < 0) freeRc = InvalidReading;
         constexpr double GiB = 1024.0 * 1024.0 * 1024.0;
-        out.push_back(metric("SD liber", freeRc, format("%.2f GiB", free / GiB)));
+        out.push_back(metric("SD free", freeRc, format("%.2f GiB", free / GiB)));
         if (!overview) {
             auto totalRc = sd ? fsFsGetTotalSpace(sd, "/", &total) : NotReady;
             if (!totalRc && total < 0) totalRc = InvalidReading;
             out.push_back(metric("SD total", totalRc, format("%.2f GiB", total / GiB)));
             const auto usedRc = freeRc ? freeRc : totalRc ? totalRc : free > total ? InvalidReading : 0;
-            out.push_back(metric("SD ocupat", usedRc, format("%.2f GiB", usedRc ? 0.0 : (total - free) / GiB)));
+            out.push_back(metric("SD used", usedRc, format("%.2f GiB", usedRc ? 0.0 : (total - free) / GiB)));
         }
     }
     return out;

@@ -1,44 +1,35 @@
-# SwitchColor pentru Switch Lite
+# PrismNX architecture
 
-Tinta utilizatorului: Switch Lite, Atmosphere 1.11.2|S, firmware raportat 20.5.0.
-Versiunile sunt pastrate asa cum au fost comunicate; compatibilitatea pe consola
-va trebui verificata pe dispozitiv, nu dedusa doar din compilare.
+PrismNX is a native C++20 Tesla/Ultrahand overlay built with devkitA64/libnx.
+It uses Fizeau IPC for internal-display color processing. Telemetry and quick
+controls use independently initialized optional console services.
 
-## Arhitectura aleasa
+## Modules
 
-Overlay nativ C++ `.ovl` pentru Tesla/Ultrahand, construit cu devkitA64/libnx.
-Client IPC pentru serviciul Fizeau; Fizeau gestioneaza unitatea hardware CMU.
-Folosim ecranul intern, potrivit pentru Switch Lite. Nu accesam memoria jocului.
+- `model.cpp` validates settings and implements bounded manual controls.
+- `presets.cpp` provides 18 static presets and category metadata.
+- `backend.cpp` snapshots all four profiles and verifies transactions. A
+  failed hardware application is treated as potentially partial; recovery
+  must both succeed and match readback. Reconnecting cannot clear uncertainty.
+- `switch_backend.cpp` implements the real Fizeau IPC connection.
+- `storage.cpp` preserves other profiles and configuration comments, honors
+  upstream path precedence and uses checked staging, rollback and backups.
+- `telemetry.cpp` reads optional services and handles explicit brightness and
+  volume actions. Missing values are unavailable, never fabricated zeroes.
+- `main.cpp` and UI modules implement the hub, sliders, presets and tools.
+  Polling runs in updates, not draw callbacks; GUI pops are deferred to avoid
+  invalid references in the pinned libtesla implementation.
 
-Alternative evaluate: modificarea intregii aplicatii Fizeau mareste suprafata
-de intretinere; un motor propriu de procesare necesita cercetare firmware/GPU.
-Un overlay propriu peste serviciul existent permite o prima versiune utilizabila.
+## Persistence and compatibility
 
-## Prima versiune
+Manual edits unify day and night for the selected internal profile. Save is
+explicit. Live restoration does not silently replace saved configuration.
+Spatial sharpening is outside the Fizeau color-matrix/LUT backend.
 
-- Reglaje live: saturatie, contrast, gamma, temperatura, nuanta si luminanta.
-- Standard, Vibrant, Cinema si Night sunt preseturi manuale, nu calibrari de ecran.
-- Activare/dezactivare, resetare neutra si restaurarea starii de la deschidere.
-- Salvare explicita pentru repornire in configuratia Fizeau, cu copie de rezerva.
-- Citirea si pastrarea celorlalte profiluri; modificarile vizeaza profilul intern.
-- Ziua si noaptea primesc aceleasi reglaje pentru un rezultat manual constant.
-- Erorile IPC si de card SD sunt afisate; un serviciu absent nu blocheaza overlay-ul.
+The PrismNX rename retains `SwitchColor.ovl`, `config/SwitchColor/reports/`
+and `.switchcolor.*` recovery suffixes for compatibility with existing
+installations. Fizeau paths, protocol, title ID and settings are unchanged.
 
-Sharpness spatial nu este oferit de CMU. Prima versiune nu prezinta un slider
-nefunctional; include o explicatie scurta in pagina de informatii.
-
-## Verificare si livrare
-
-Compilare ARM64 reala, verificarea formatului NRO/OVL, teste pentru limite,
-persistenta si tranzactii IPC folosind un serviciu simulat pe calculator.
-Arhiva de instalare a overlay-ului, surse si ghid in romana. Fizeau ramane o
-dependenta separata pentru a evita suprascrierea unei instalari existente.
-Testele pe PC nu certifica functionarea pe consola; ghidul include verificarile
-in joc, la suspendare/revenire si dupa repornire.
-
-## Surse verificate
-
-- https://github.com/averne/Fizeau/tree/v2.8.3
-- https://github.com/WerWolv/libtesla
-- https://github.com/ppkantorski/Ultrahand-Overlay
-- https://github.com/Atmosphere-NX/Atmosphere/releases/tag/1.11.2
+The bundled backend is Fizeau 2.8.3 plus the documented EOF-profile fix;
+original dependency source and license notices remain intact. See
+[THIRD_PARTY.md](../THIRD_PARTY.md) and [VALIDATION.md](VALIDATION.md).

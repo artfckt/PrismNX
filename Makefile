@@ -38,7 +38,7 @@ out/SwitchColor.elf: $(OBJECTS)
 
 out/SwitchColor.nacp: Makefile
 	@mkdir -p out
-	nacptool --create "SwitchColor" "SwitchColor contributors" "0.2.0" $@
+	nacptool --create "PrismNX" "PrismNX contributors" "0.3.0" $@
 
 out/SwitchColor.ovl: out/SwitchColor.elf out/SwitchColor.nacp
 	elf2nro $< $@ --nacp=out/SwitchColor.nacp

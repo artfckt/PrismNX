@@ -7,13 +7,13 @@
 #include <chrono>
 
 namespace sc::ui {
-inline constexpr const char* Version = "0.2.0";
+inline constexpr const char* Version = "0.3.0";
 struct App {
     SwitchBackend backend;
     Controller controller{backend};
     Telemetry telemetry;
     Outcome last{};
-    std::string status = "Setarile curente au fost citite.";
+    std::string status = "Current settings read.";
     bool sdMounted = false;
     std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
     void report(Outcome outcome, const char* success);

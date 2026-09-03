@@ -86,12 +86,12 @@ std::string valueLabel(const FizeauSettings& s, Control control) {
 
 const char* controlLabel(Control control) {
     switch (control) {
-        case Control::Saturation: return "Saturatie";
+        case Control::Saturation: return "Saturation";
         case Control::Contrast: return "Contrast";
         case Control::Gamma: return "Gamma";
-        case Control::Temperature: return "Temperatura";
-        case Control::Hue: return "Nuanta";
-        case Control::Luminance: return "Luminanta";
+        case Control::Temperature: return "Temperature";
+        case Control::Hue: return "Hue";
+        case Control::Luminance: return "Luminance";
     }
     return "";
 }

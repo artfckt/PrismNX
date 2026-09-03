@@ -1,6 +1,6 @@
 # Sources, licenses and local modifications
 
-SwitchColor source is GPL-2.0-or-later. See LICENSE.
+PrismNX (formerly SwitchColor) source is GPL-2.0-or-later. See LICENSE.
 
 | Dependency | Revision | License | Use |
 |---|---|---|---|
@@ -42,4 +42,4 @@ https://github.com/averne/Fizeau/releases/download/v2.8.3/Fizeau-2.8.3-5bf3f0d.z
 SHA256: `8c44d2cfee17c9020a1f5ba9223e260c96ea716bf016c7cd0371de0685835b85`
 
 The patch filenames identify firmware build IDs. Their presence does not
-constitute testing on the user's reported firmware.
+constitute testing on a particular firmware version.

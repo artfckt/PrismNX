@@ -101,13 +101,13 @@ Fields profileFields(const FizeauProfile& p) {
 }
 
 bool parse(const std::string& input, std::vector<Line>& lines, std::string& error) {
-    if (input.size() > MaxConfigSize) { error = "Configuratia depaseste limita de 256 KiB."; return false; }
+    if (input.size() > MaxConfigSize) { error = "Configuration exceeds the 256 KiB limit."; return false; }
     std::string section;
     std::set<std::string> sections, keys;
     std::size_t position = 0;
     unsigned lineNumber = 0;
     auto fail = [&](const std::string& message) {
-        error = "Config invalid, linia " + std::to_string(lineNumber) + ": " + message;
+        error = "Invalid configuration, line " + std::to_string(lineNumber) + ": " + message;
         return false;
     };
     while (position < input.size()) {
@@ -120,9 +120,9 @@ bool parse(const std::string& input, std::vector<Line>& lines, std::string& erro
         position = next == std::string::npos ? input.size() : next + 1;
         // ini.c includes its adjacent header (200-byte default), not Fizeau's
         // wrapper header which advertises 256. Leave room for CRLF and NUL.
-        if (line.raw.size() > 197) return fail("linie prea lunga pentru Fizeau.");
+        if (line.raw.size() > 197) return fail("line too long for Fizeau.");
         for (unsigned char c : line.raw)
-            if ((c < 32 && c != '\t') || c == 127) return fail("caracter de control.");
+            if ((c < 32 && c != '\t') || c == 127) return fail("control character.");
         std::string content = trim(line.raw);
         if (lineNumber == 1 && content.compare(0, 3, "\xef\xbb\xbf") == 0) {
             // Keep the UTF-8 BOM in the original line but exclude it from parsing.
@@ -134,41 +134,41 @@ bool parse(const std::string& input, std::vector<Line>& lines, std::string& erro
         }
         // inih treats indented non-comment lines as continuations of the prior
         // key. Rewriting them as ordinary assignments would change semantics.
-        if (!line.raw.empty() && space(line.raw.front())) return fail("continuare/indentare nesuportata.");
+        if (!line.raw.empty() && space(line.raw.front())) return fail("unsupported continuation/indentation.");
         if (content.front() == '[') {
             const auto close = content.find(']');
-            if (close == std::string::npos) return fail("sectiune fara paranteza inchisa.");
+            if (close == std::string::npos) return fail("section has no closing bracket.");
             section = trim(content.substr(1, close - 1));
             const auto trailing = trim(content.substr(close + 1));
             if (!trailing.empty() && trailing.front() != ';' && trailing.front() != '#')
-                return fail("text dupa sectiune.");
+                return fail("text after section.");
             // Fizeau derives profile IDs from the last section character. Other
             // sections are unsafe even if a generic INI parser would accept them.
             if (section.size() != 8 || section.compare(0, 7, "profile") != 0 || section.back() < '1' || section.back() > '4')
-                return fail("sectiune nesuportata: " + section);
-            if (!sections.insert(section).second) return fail("sectiune duplicata: " + section);
+                return fail("unsupported section: " + section);
+            if (!sections.insert(section).second) return fail("duplicate section: " + section);
             line.header = true; line.section = section;
         } else {
             const auto delimiter = line.raw.find_first_of("=:");
-            if (delimiter == std::string::npos) return fail("lipseste separatorul '='.");
+            if (delimiter == std::string::npos) return fail("missing '=' separator.");
             line.key = trim(line.raw.substr(0, delimiter));
             if (lineNumber == 1 && line.key.compare(0, 3, "\xef\xbb\xbf") == 0) line.key = trim(line.key.substr(3));
-            if (line.key.empty()) return fail("cheie vida.");
-            if (line.key.size() > 49) return fail("cheie prea lunga pentru Fizeau.");
+            if (line.key.empty()) return fail("empty key.");
+            if (line.key.size() > 49) return fail("key too long for Fizeau.");
             for (unsigned char c : line.key)
-                if (!std::isalnum(c) && c != '_' && c != '-' && c != '.') return fail("cheie invalida.");
-            if (!keys.insert(section + "\n" + line.key).second) return fail("cheie duplicata: " + line.key);
+                if (!std::isalnum(c) && c != '_' && c != '-' && c != '.') return fail("invalid key.");
+            if (!keys.insert(section + "\n" + line.key).second) return fail("duplicate key: " + line.key);
             // Unknown profile keys are ignored by Fizeau, but unknown globals
             // return a parse error and prevent its boot-time global assignment.
             if (section.empty() && line.key != "active" && line.key != "handheld_profile" && line.key != "docked_profile")
-                return fail("cheie globala nesuportata de Fizeau: " + line.key);
+                return fail("global key unsupported by Fizeau: " + line.key);
             std::size_t valueStart = delimiter + 1;
             while (valueStart < line.raw.size() && space(line.raw[valueStart])) ++valueStart;
             std::size_t valueEnd = line.raw.size();
             for (std::size_t i = valueStart; i < line.raw.size(); ++i)
                 if (line.raw[i] == ';' && (i == valueStart || space(line.raw[i - 1]))) { valueEnd = i; break; }
             while (valueEnd > valueStart && space(line.raw[valueEnd - 1])) --valueEnd;
-            if (valueEnd == valueStart) return fail("valoare vida: " + line.key);
+            if (valueEnd == valueStart) return fail("empty value: " + line.key);
             line.prefix = line.raw.substr(0, valueStart);
             line.suffix = line.raw.substr(valueEnd);
         }
@@ -185,16 +185,16 @@ PathKind inspect(const std::string& path) {
 }
 bool readFile(const std::string& path, std::string& data, std::string& error) {
     FILE* file = std::fopen(path.c_str(), "rb");
-    if (!file) { error = systemError("Nu pot citi", path); return false; }
+    if (!file) { error = systemError("Cannot read", path); return false; }
     data.clear();
     char buffer[4096];
     bool ok = true;
     while (const auto count = std::fread(buffer, 1, sizeof(buffer), file)) {
         data.append(buffer, count);
-        if (data.size() > MaxConfigSize) { error = "Fisier prea mare: " + path; ok = false; break; }
+        if (data.size() > MaxConfigSize) { error = "File too large: " + path; ok = false; break; }
     }
-    if (std::ferror(file)) { error = systemError("Citire esuata", path); ok = false; }
-    if (std::fclose(file) != 0) { error = systemError("Inchidere esuata", path); ok = false; }
+    if (std::ferror(file)) { error = systemError("Read failed", path); ok = false; }
+    if (std::fclose(file) != 0) { error = systemError("Close failed", path); ok = false; }
     return ok;
 }
 bool createFile(const std::string& path, const std::string& data, std::string& error) {
@@ -203,24 +203,24 @@ bool createFile(const std::string& path, const std::string& data, std::string& e
     flags |= O_BINARY;
 #endif
     const int descriptor = ::open(path.c_str(), flags, 0666);
-    if (descriptor < 0) { error = systemError("Nu pot crea", path); return false; }
+    if (descriptor < 0) { error = systemError("Cannot create", path); return false; }
     FILE* file = ::fdopen(descriptor, "wb");
     if (!file) {
-        error = systemError("Nu pot deschide fluxul", path);
+        error = systemError("Cannot open stream", path);
         ::close(descriptor); std::remove(path.c_str()); return false;
     }
     bool ok = std::fwrite(data.data(), 1, data.size(), file) == data.size();
     if (ok) ok = std::fflush(file) == 0;
-    if (!ok) error = systemError("Scriere esuata", path);
-    if (std::fclose(file) != 0) { if (ok) error = systemError("Inchidere esuata", path); ok = false; }
+    if (!ok) error = systemError("Write failed", path);
+    if (std::fclose(file) != 0) { if (ok) error = systemError("Close failed", path); ok = false; }
     if (!ok) {
-        if (std::remove(path.c_str()) != 0) error += "; fisierul incomplet nu a putut fi eliminat: " + path;
+        if (std::remove(path.c_str()) != 0) error += "; incomplete file could not be removed: " + path;
         return false;
     }
     std::string verify;
     if (!readFile(path, verify, error) || verify != data) {
-        if (error.empty()) error = "Verificarea scrierii a esuat: " + path;
-        if (std::remove(path.c_str()) != 0) error += "; fisierul nu a putut fi eliminat: " + path;
+        if (error.empty()) error = "Write verification failed: " + path;
+        if (std::remove(path.c_str()) != 0) error += "; file could not be removed: " + path;
         return false;
     }
     return true;
@@ -232,15 +232,15 @@ bool ensureParents(const std::string& path, std::string& error) {
         struct stat info{};
         if (::stat(parent.c_str(), &info) == 0) {
             if (S_ISDIR(info.st_mode)) continue;
-            error = "Calea parinte nu este director: " + parent; return false;
+            error = "Parent path is not a directory: " + parent; return false;
         }
-        if (errno != ENOENT) { error = systemError("Nu pot verifica directorul", parent); return false; }
+        if (errno != ENOENT) { error = systemError("Cannot inspect directory", parent); return false; }
 #ifdef _WIN32
         const auto rc = ::_mkdir(parent.c_str());
 #else
         const auto rc = ::mkdir(parent.c_str(), 0777);
 #endif
-        if (rc != 0) { error = systemError("Nu pot crea directorul", parent); return false; }
+        if (rc != 0) { error = systemError("Cannot create directory", parent); return false; }
     }
     return true;
 }
@@ -248,10 +248,10 @@ bool ensureParents(const std::string& path, std::string& error) {
 
 bool renderConfig(const Snapshot& snapshot, const std::string& existing, std::string& output, std::string& error) {
     output.clear(); error.clear();
-    if (!validSnapshot(snapshot)) { error = "Stare Fizeau invalida; salvarea a fost anulata."; return false; }
+    if (!validSnapshot(snapshot)) { error = "Invalid Fizeau state; save cancelled."; return false; }
     for (const auto& p : snapshot.profiles)
         if (p.dusk_begin.s || p.dusk_end.s || p.dawn_begin.s || p.dawn_end.s) {
-            error = "Fizeau INI nu poate pastra secundele din orele de tranzitie."; return false;
+            error = "Fizeau INI cannot preserve seconds in transition times."; return false;
         }
     std::vector<Line> lines;
     if (!parse(existing, lines, error)) return false;
@@ -302,25 +302,25 @@ bool renderConfig(const Snapshot& snapshot, const std::string& existing, std::st
 
 SaveResult saveSnapshot(const Snapshot& snapshot, const ConfigPaths& paths) {
     SaveResult result;
-    if (paths.preferred.empty() || paths.fallback.empty()) { result.message = "Cale de configuratie vida."; return result; }
+    if (paths.preferred.empty() || paths.fallback.empty()) { result.message = "Empty configuration path."; return result; }
     // A prior interrupted replacement may temporarily remove the preferred
     // config. Do not mistake that for a normal switch to the fallback location.
     for (const auto& suffix : {".switchcolor.tmp", ".switchcolor.rollback", ".switchcolor.bak.tmp"}) {
         const auto recoveryPath = paths.preferred + suffix;
         if (inspect(recoveryPath) != PathKind::Missing) {
             result.path = paths.preferred;
-            result.message = "Salvare oprita: verificati fisierul de recuperare " + recoveryPath;
+            result.message = "Save blocked: inspect recovery file " + recoveryPath;
             return result;
         }
     }
     const auto preferredKind = inspect(paths.preferred);
     if (preferredKind == PathKind::Error || preferredKind == PathKind::Other) {
         result.path = paths.preferred;
-        result.message = "Configuratia prioritara nu poate fi citita ca fisier: " + result.path; return result;
+        result.message = "Preferred configuration cannot be read as a file: " + result.path; return result;
     }
     result.path = preferredKind == PathKind::File ? paths.preferred : paths.fallback;
     const auto kind = inspect(result.path);
-    if (kind == PathKind::Error || kind == PathKind::Other) { result.message = "Configuratia nu este un fisier accesibil: " + result.path; return result; }
+    if (kind == PathKind::Error || kind == PathKind::Other) { result.message = "Configuration is not an accessible file: " + result.path; return result; }
     const bool existed = kind == PathKind::File;
     std::string original, rendered;
     if (existed && !readFile(result.path, original, result.message)) return result;
@@ -331,7 +331,7 @@ SaveResult saveSnapshot(const Snapshot& snapshot, const ConfigPaths& paths) {
     const std::string backupTemporary = result.path + ".switchcolor.bak.tmp";
     for (const auto& auxiliary : {temporary, rollback, backupTemporary})
         if (inspect(auxiliary) != PathKind::Missing) {
-            result.message = "Salvare oprita: exista un fisier de recuperare. Verificati " + auxiliary; return result;
+            result.message = "Save blocked: recovery file exists. Inspect " + auxiliary; return result;
         }
     if (existed) {
         result.backupPath = result.path + ".switchcolor.bak";
@@ -339,48 +339,48 @@ SaveResult saveSnapshot(const Snapshot& snapshot, const ConfigPaths& paths) {
         if (backupKind == PathKind::Missing) {
             if (!createFile(backupTemporary, original, result.message)) return result;
             if (inspect(result.backupPath) != PathKind::Missing) {
-                result.message = "Copia de rezerva a aparut in timpul salvarii; salvarea a fost anulata.";
-                if (std::remove(backupTemporary.c_str()) != 0) result.message += "; fisier ramas: " + backupTemporary;
+                result.message = "A backup appeared during saving; save cancelled.";
+                if (std::remove(backupTemporary.c_str()) != 0) result.message += "; file left behind: " + backupTemporary;
                 return result;
             }
             if (std::rename(backupTemporary.c_str(), result.backupPath.c_str()) != 0) {
-                result.message = systemError("Nu pot instala copia de rezerva", result.backupPath);
-                if (std::remove(backupTemporary.c_str()) != 0) result.message += "; fisier ramas: " + backupTemporary;
+                result.message = systemError("Cannot install backup", result.backupPath);
+                if (std::remove(backupTemporary.c_str()) != 0) result.message += "; file left behind: " + backupTemporary;
                 return result;
             }
         } else if (backupKind != PathKind::File) {
-            result.message = "Copia de rezerva nu este un fisier accesibil: " + result.backupPath; return result;
+            result.message = "Backup is not an accessible file: " + result.backupPath; return result;
         }
     }
     if (!createFile(temporary, rendered, result.message)) return result;
     auto removeTemporary = [&] {
-        if (std::remove(temporary.c_str()) != 0) result.message += "; fisier temporar ramas: " + temporary;
+        if (std::remove(temporary.c_str()) != 0) result.message += "; temporary file left behind: " + temporary;
     };
     // Refuse to clobber edits made while the user was saving.
     std::string current;
     if ((existed && (!readFile(result.path, current, result.message) || current != original)) ||
         (!existed && inspect(result.path) != PathKind::Missing)) {
-        if (result.message.empty()) result.message = "Configuratia a fost modificata in timpul salvarii; incercati din nou.";
+        if (result.message.empty()) result.message = "Configuration changed during saving; try again.";
         removeTemporary(); return result;
     }
     if (existed && std::rename(result.path.c_str(), rollback.c_str()) != 0) {
-        result.message = systemError("Nu pot pregati inlocuirea", result.path);
+        result.message = systemError("Cannot prepare replacement", result.path);
         removeTemporary(); return result;
     }
     // FAT/libnx may refuse rename over an existing destination. The destination
     // is absent here; the rollback copy remains intact until installation works.
     if (std::rename(temporary.c_str(), result.path.c_str()) != 0) {
-        result.message = systemError("Nu pot instala configuratia", result.path);
+        result.message = systemError("Cannot install configuration", result.path);
         if (existed && std::rename(rollback.c_str(), result.path.c_str()) != 0)
-            result.message += "; RESTAURARE ESUATA, originalul se afla la " + rollback;
+            result.message += "; RESTORE FAILED, original is at " + rollback;
         removeTemporary(); return result;
     }
     if (existed && std::remove(rollback.c_str()) != 0) {
-        result.message = "Configuratia a fost salvata, dar curatarea a esuat. Originalul se afla la " + rollback;
+        result.message = "Configuration saved, but cleanup failed. Original is at " + rollback;
         return result;
     }
     result.ok = true;
-    result.message = "Configuratia Fizeau a fost salvata.";
+    result.message = "Fizeau configuration saved.";
     return result;
 }
 }
